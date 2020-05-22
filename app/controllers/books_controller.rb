@@ -1,7 +1,10 @@
 class BooksController < ApplicationController
+  before_action :authenticate_user! # :authenticate_user!とすることによって、「ログイン認証されていなければ、ログイン画面へリダイレクトする」機能を実装
+  before_action :baria_user, only:[:edit,:update]
 
   def show
   	@book = Book.find(params[:id])
+    @user = User.find(@book.user_id)
   end
 
   def index
@@ -11,6 +14,7 @@ class BooksController < ApplicationController
 
   def create
   	@book = Book.new(book_params) #Bookモデルのテーブルを使用しているのでbookコントローラで保存する。
+    @book.user_id = current_user.id
   	if @book.save #入力されたデータをdbに保存する。
   		redirect_to @book, notice: "successfully created book!"#保存された場合の移動先を指定。
   	else
@@ -41,6 +45,12 @@ class BooksController < ApplicationController
   end
 
   private
+  def baria_user
+    book = Book.find(params[:id])
+    if book.user != current_user
+      redirect_to books_path
+    end
+  end
 
   def book_params
   	params.require(:book).permit(:title,:body)
